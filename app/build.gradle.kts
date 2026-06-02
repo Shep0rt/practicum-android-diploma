@@ -4,6 +4,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.ksp)
     id("ru.practicum.android.diploma.plugins.developproperties")
 }
 
@@ -55,6 +56,7 @@ dependencies {
 
     // UI layer libraries
     implementation(platform(libs.compose.bom))
+    implementation(libs.coil.compose)
     implementation(libs.compose.material3)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
@@ -80,6 +82,11 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
+
+    // Database
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
     debugImplementation(libs.compose.ui.tooling)
 
