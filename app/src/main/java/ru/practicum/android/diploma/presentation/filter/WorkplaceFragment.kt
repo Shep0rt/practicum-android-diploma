@@ -6,10 +6,25 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -35,7 +50,8 @@ class WorkplaceFragment : Fragment() {
 
         // Слушаем возврат с экрана выбора страны
         parentFragmentManager.setFragmentResultListener(
-            COUNTRY_SELECTION_REQUEST_KEY, this
+            COUNTRY_SELECTION_REQUEST_KEY,
+            this
         ) { _, bundle ->
             val countryId = bundle.getString(COUNTRY_ID_KEY) ?: ""
             val countryName = bundle.getString(COUNTRY_NAME_KEY) ?: ""
@@ -44,7 +60,8 @@ class WorkplaceFragment : Fragment() {
 
         // Слушаем возврат с экрана выбора региона (Выполняет Задача 4.2 - автоопределение страны)
         parentFragmentManager.setFragmentResultListener(
-            SelectRegionFragment.REGION_RESULT_KEY, this
+            SelectRegionFragment.REGION_RESULT_KEY,
+            this
         ) { _, bundle ->
             val regId = bundle.getString(SelectRegionFragment.REG_ID) ?: ""
             val regName = bundle.getString(SelectRegionFragment.REG_NAME) ?: ""
@@ -128,7 +145,7 @@ fun WorkplaceScreen(
                     .padding(vertical = Dimens.paddingSystemBar),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBackClicked, modifier = Modifier.offset(x = (-Dimens.paddingMedium))) {
+                IconButton(onClick = onBackClicked, modifier = Modifier.offset(x = -Dimens.paddingMedium)) {
                     Icon(
                         painter = painterResource(R.drawable.ic_arrow_back_24),
                         contentDescription = null,

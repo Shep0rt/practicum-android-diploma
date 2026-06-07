@@ -11,7 +11,7 @@ import java.util.*
  *
  * Плагин дает возможность получить к ним типизированный доступ в build.gradle.kts
  */
-@Suppress("detekt.UnnecessaryAbstractClass")
+@Suppress("detekt.UnnecessaryAbstractClass", "detekt.MaxLineLength")
 abstract class DevelopPropertiesPluginExtension {
     var apiAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcmFjdGljdW0ucnUiLCJhdWQiOiJwcmFjdGljdW0ucnUiLCJ1c2VybmFtZSI6InNlciJ9.lLNbw9hy49FAomc-4bQTyqhxjG59fqK8lJMZ9rTGpo0"
 }
