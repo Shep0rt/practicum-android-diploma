@@ -7,40 +7,23 @@ import android.view.ViewGroup
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -53,291 +36,206 @@ import ru.practicum.android.diploma.presentation.ui.theme.Dimens
 
 class SelectRegionFragment : Fragment() {
 
-    private val viewModel by viewModel<SelectRegionViewModel>()
+    private val viewModel: SelectRegionViewModel by viewModel()
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        鏡inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-
             setContent {
                 AppTheme {
-                    val state by viewModel.uiState.collectAsState()
-
                     SelectRegionScreen(
-                        state = state,
-                        onBackClicked = { findNavController().popBackStack() },
-                        onQueryChanged = viewModel::onQueryChanged,
-                        onClearQueryClicked = viewModel::onClearQueryClicked,
-                        onRegionClicked = ::onRegionClicked,
+                        viewModel = viewModel,
+                        onRegionClicked = { region ->
+                            // Формируем Bundle для возврата на экран Место работы
+                            val result = Bundle().apply {
+                                putString(REG_ID, region.id)
+                                putString(REG_NAME, region.name)
+                                // Критерий автоопределения страны: передаем ID и Name страны,
+                                // которые ты уже успешно замапил в репозитории внутри Region!
+                                putString(CTR_ID, region.countryId)
+                                putString(CTR_NAME, region.countryName)
+                            }
+                            // Отправляем результат по ключу
+                            parentFragmentManager.setFragmentResult(REGION_RESULT_KEY, result)
+                            // Возвращаемся назад
+                            findNavController().popBackStack()
+                        },
+                        onBackClicked = { findNavController().popBackStack() }
                     )
                 }
             }
         }
     }
 
-    private fun onRegionClicked(region: Region) {
-        val bundle = Bundle().apply {
-            putString(WorkplaceFragment.REGION_ID_KEY, region.id)
-            putString(WorkplaceFragment.REGION_NAME_KEY, region.name)
-            putString(WorkplaceFragment.COUNTRY_ID_KEY, region.countryId)
-            putString(WorkplaceFragment.COUNTRY_NAME_KEY, region.countryName)
-        }
-        parentFragmentManager.setFragmentResult(
-            WorkplaceFragment.REGION_SELECTION_REQUEST_KEY,
-            bundle
-        )
-        findNavController().popBackStack()
+    companion object {
+        const val COUNTRY_ID_KEY = "country_id_key"
+
+        // Ключи для передачи данных между фрагментами
+        const val REGION_RESULT_KEY = "region_result_key"
+        const val REG_ID = "reg_id"
+        const val REG_NAME = "reg_name"
+        const val CTR_ID = "ctr_id"
+        const val CTR_NAME = "ctr_name"
     }
 }
 
 @Composable
-private fun SelectRegionScreen(
-    state: SelectRegionUiState,
-    onBackClicked: () -> Unit,
-    onQueryChanged: (String) -> Unit,
-    onClearQueryClicked: () -> Unit,
+fun SelectRegionScreen(
+    viewModel: SelectRegionViewModel,
     onRegionClicked: (Region) -> Unit,
+    onBackClicked: () -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    // Извлекаем текущий поисковый запрос из стейта, который написал твой коллега
+    val searchQuery = when (val state = uiState) {
+        is SelectRegionUiState.Content -> state.query
+        is SelectRegionUiState.EmptySearch -> state.query
+        else -> ""
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        SelectRegionTopBar(onBackClicked = onBackClicked)
-        Spacer(modifier = Modifier.height(Dimens.paddingSystemBar))
-
-        Column(
+        // Тулбар экрана
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = Dimens.paddingDefault),
+                .padding(horizontal = 8.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val query = when (state) {
-                is SelectRegionUiState.Content -> state.query
-                is SelectRegionUiState.EmptySearch -> state.query
-                else -> ""
-            }
-
-            RegionSearchField(
-                query = query,
-                onQueryChanged = onQueryChanged,
-                onClearQueryClicked = onClearQueryClicked,
-            )
-
-            Spacer(modifier = Modifier.height(Dimens.paddingDefault))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            ) {
-                when (state) {
-                    is SelectRegionUiState.Loading -> RegionLoading()
-                    is SelectRegionUiState.Error -> RegionErrorPlaceholder()
-                    is SelectRegionUiState.EmptySearch -> RegionEmptySearchPlaceholder()
-                    is SelectRegionUiState.Content -> RegionList(
-                        regions = state.regions,
-                        onRegionClicked = onRegionClicked,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SelectRegionTopBar(onBackClicked: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                top = Dimens.paddingTopLarge,
-                start = Dimens.paddingSmall,
-                end = Dimens.paddingDefault,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onBackClicked) {
-            Icon(
-                painter = painterResource(R.drawable.ic_arrow_back_24),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Spacer(modifier = Modifier.width(Dimens.paddingSystemBar))
-        Text(
-            text = stringResource(R.string.filter_region_title),
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Medium,
-            ),
-        )
-    }
-}
-
-@Composable
-private fun RegionSearchField(
-    query: String,
-    onQueryChanged: (String) -> Unit,
-    onClearQueryClicked: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(Dimens.searchFieldHeight)
-            .clip(RoundedCornerShape(Dimens.cornerRadius))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .padding(start = Dimens.paddingDefault, end = Dimens.paddingSystemBar),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        BasicTextField(
-            value = query,
-            onValueChange = onQueryChanged,
-            modifier = Modifier.weight(1f),
-            textStyle = MaterialTheme.typography.titleMedium.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-            ),
-            cursorBrush = SolidColor(Blue),
-            singleLine = true,
-            decorationBox = { innerTextField ->
-                if (query.isBlank()) {
-                    Text(
-                        text = stringResource(R.string.filter_region_hint),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                        ),
-                    )
-                }
-                innerTextField()
-            },
-        )
-
-        if (query.isBlank()) {
-            Box(
-                modifier = Modifier.size(Dimens.iconSizeSmall),
-                contentAlignment = Alignment.Center,
-            ) {
+            IconButton(onClick = onBackClicked) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_search_24),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface,
+                    painter = painterResource(R.drawable.ic_arrow_back_24), // Укажи свой ID стрелки назад
+                    contentDescription = "Назад"
                 )
             }
-        } else {
-            IconButton(onClick = onClearQueryClicked) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_close_24),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RegionLoading() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(Dimens.searchProgressSize),
-            color = Blue,
-            strokeWidth = Dimens.paddingSmall,
-        )
-    }
-}
-
-@Composable
-private fun RegionErrorPlaceholder() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(R.drawable.il_region_error_328),
-                contentDescription = null,
-                modifier = Modifier.fillMaxWidth(),
-                contentScale = ContentScale.FillWidth,
-            )
-            Spacer(modifier = Modifier.height(Dimens.paddingDefault))
             Text(
-                text = stringResource(R.string.filter_region_error),
-                modifier = Modifier.padding(horizontal = Dimens.paddingExtraLarge),
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp),
+                text = stringResource(R.string.filter_region_title),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Medium,
+                ),
+                modifier = Modifier.padding(start = Dimens.paddingSystemBar)
             )
         }
-    }
-}
 
-@Composable
-private fun RegionEmptySearchPlaceholder() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(R.drawable.il_main_no_results_328),
-                contentDescription = null,
-                modifier = Modifier.fillMaxWidth(),
-                contentScale = ContentScale.FillWidth,
-            )
-            Spacer(modifier = Modifier.height(Dimens.paddingDefault))
-            Text(
-                text = stringResource(R.string.filter_region_empty),
-                modifier = Modifier.padding(horizontal = Dimens.paddingExtraLarge),
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun RegionList(
-    regions: List<Region>,
-    onRegionClicked: (Region) -> Unit,
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = Dimens.paddingSmall),
-    ) {
-        items(regions) { region ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(Dimens.heightMedium)
-                    .clickable { onRegionClicked(region) },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+        // Поле ввода поискового запроса (Критерий: мгновенный поиск на лету)
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { viewModel.onQueryChanged(it) },
+            placeholder = { 
                 Text(
-                    text = region.name,
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.onBackground,
+                    text = stringResource(R.string.filter_region_hint),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Normal,
-                    ),
-                )
-                Icon(
-                    painter = painterResource(R.drawable.ic_arrow_forward_24),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
+                        fontWeight = FontWeight.Normal
+                    )
+                ) 
+            }, // Наш Hint (подсказка)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Dimens.paddingDefault, vertical = Dimens.paddingSystemBar),
+            singleLine = true,
+            shape = RoundedCornerShape(Dimens.cornerRadius),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                cursorColor = Blue,
+                focusedBorderColor = Color.Transparent,
+                unfocusedBorderColor = Color.Transparent,
+            ),
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.onClearQueryClicked() }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_close_24), // Твой крестик для очистки
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_search_24), // Иконка лупы, если пусто
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        )
+
+        // Контентная часть в зависимости от стейта
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            when (val state = uiState) {
+                is SelectRegionUiState.Loading -> {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+                is SelectRegionUiState.Error -> {
+                    // Плейсхолдер ошибки загрузки из сети
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Image(
+                            painter = painterResource(R.drawable.il_region_error_328), // Твоя картинка ошибки
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.height(Dimens.paddingDefault))
+                        Text(
+                            text = stringResource(R.string.filter_region_error),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp)
+                        )
+                    }
+                }
+                is SelectRegionUiState.EmptySearch -> {
+                    // Плейсхолдер "Такого региона нет"
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Image(
+                            painter = painterResource(R.drawable.il_main_no_results_328), // Твоя картинка "нет результатов"
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.height(Dimens.paddingDefault))
+                        Text(
+                            text = stringResource(R.string.filter_region_empty),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp)
+                        )
+                    }
+                }
+                is SelectRegionUiState.Content -> {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(state.regions) { region ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(Dimens.heightMedium)
+                                    .clickable { onRegionClicked(region) },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = region.name,
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                )
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_arrow_forward_24),
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

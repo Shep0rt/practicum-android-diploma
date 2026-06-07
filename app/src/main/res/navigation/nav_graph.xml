@@ -36,7 +36,14 @@
     <fragment
         android:id="@+id/workplaceFragment"
         android:name="ru.practicum.android.diploma.presentation.filter.WorkplaceFragment"
-        android:label="Workplace" />
+        android:label="Workplace">
+        <action
+            android:id="@+id/action_workplaceFragment_to_selectCountryFragment"
+            app:destination="@id/selectCountryFragment" />
+        <action
+            android:id="@+id/action_workplaceFragment_to_selectRegionFragment"
+            app:destination="@id/selectRegionFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/selectCountryFragment"
