@@ -20,12 +20,52 @@
         android:label="Team" />
 
     <fragment
+        android:id="@+id/filterFragment"
+        android:name="ru.practicum.android.diploma.presentation.filter.FilterFragment"
+        android:label="Filter">
+        <action
+            android:id="@+id/action_filterFragment_to_industrySelectionFragment"
+            app:destination="@id/industrySelectionFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/industrySelectionFragment"
+        android:name="ru.practicum.android.diploma.presentation.industry.IndustrySelectionFragment"
+        android:label="Industry Selection">
+        <argument
+            android:name="preselectedIndustryId"
+            app:argType="integer"
+            android:defaultValue="-1" />
+    </fragment>
+
+    <fragment
         android:id="@+id/vacancyDetailsFragment"
         android:name="ru.practicum.android.diploma.presentation.details.VacancyDetailsFragment"
         android:label="Vacancy Details">
         <argument
             android:name="vacancyId"
             app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/workplaceFragment"
+        android:name="ru.practicum.android.diploma.presentation.filter.WorkplaceFragment"
+        android:label="Workplace" />
+
+    <fragment
+        android:id="@+id/selectCountryFragment"
+        android:name="ru.practicum.android.diploma.presentation.filter.SelectCountryFragment"
+        android:label="Select Country" />
+
+    <fragment
+        android:id="@+id/selectRegionFragment"
+        android:name="ru.practicum.android.diploma.presentation.filter.SelectRegionFragment"
+        android:label="Select Region">
+        <argument
+            android:name="country_id"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
 
 </navigation>
